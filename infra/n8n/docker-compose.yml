@@ -87,6 +87,7 @@ services:
   n8n-main:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
+    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n start"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -134,7 +135,7 @@ services:
   n8n-webhook:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["n8n", "webhook"]
+    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n webhook"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -184,7 +185,7 @@ services:
   n8n-worker:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["n8n", "worker"]
+    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n worker"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -228,6 +229,7 @@ services:
   n8n-scrape-main:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
+    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n start"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -274,7 +276,7 @@ services:
   n8n-scrape-webhook:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["n8n", "webhook"]
+    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n webhook"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -323,7 +325,7 @@ services:
   n8n-scrape-worker:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["n8n", "worker"]
+    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n worker"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
