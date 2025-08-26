@@ -1,5 +1,3 @@
-version: "3.9"
-
 name: ${COMPOSE_PROJECT_NAME}
 
 networks:
@@ -19,19 +17,12 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:${CLOUDFLARED_TAG}
     restart: unless-stopped
-    entrypoint: ["/bin/sh","/entrypoint.sh"]
+    entrypoint: ["cloudflared"]
+    command: ["tunnel", "--no-autoupdate", "run", "--token", "${CLOUDFLARE_TUNNEL_TOKEN}"]
     volumes:
-      - ./cloudflared/entrypoint.sh:/entrypoint.sh:ro
-      - ./cloudflared/config.tmpl.yml:/etc/cloudflared/config.tmpl.yml:ro
-      # Place your credentials JSON in ./cloudflared and mount it here as credentials.json (JSON mode)
-      - ./cloudflared/${CLOUDFLARE_TUNNEL_CREDENTIALS_FILE}:/etc/cloudflared/credentials.json:ro
+      - ./cloudflared:/etc/cloudflared:ro
     environment:
       - CLOUDFLARE_TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-      - CLOUDFLARE_TUNNEL_ID=${CLOUDFLARE_TUNNEL_ID}
-      - N8N_HOST=${N8N_HOST}
-      - N8N_WEBHOOK_HOST=${N8N_WEBHOOK_HOST}
-      - N8N_SCRAPE_HOST=${N8N_SCRAPE_HOST}
-      - N8N_SCRAPE_WEBHOOK_HOST=${N8N_SCRAPE_WEBHOOK_HOST}
     networks:
       - internal
     labels:
@@ -340,7 +331,7 @@ services:
 
   # External headless browser (prefer calling via HTTP/WS from n8n)
   browserless:
-    image: browserless/chromium:${BROWSERLESS_TAG}
+    image: ghcr.io/browserless/chromium:${BROWSERLESS_TAG}
     restart: unless-stopped
     environment:
       - MAX_CONCURRENT_SESSIONS=5
