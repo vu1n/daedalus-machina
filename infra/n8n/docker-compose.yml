@@ -87,7 +87,6 @@ services:
   n8n-main:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n start"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -117,15 +116,12 @@ services:
     user: "1000:1000"
     security_opt:
       - no-new-privileges:true
-    read_only: true
+    # Allow writes for n8n runtime cache and assets; keep other hardening
+    # read_only disabled for maintainability per n8n's runtime needs
     tmpfs:
       - /tmp
     volumes:
       - n8n_data:/home/node/.n8n
-      - type: tmpfs
-        target: /home/node/.cache
-        tmpfs:
-          mode: 1777
     networks:
       - internal
     labels:
@@ -135,7 +131,7 @@ services:
   n8n-webhook:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n webhook"]
+    command: ["n8n", "webhook"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -167,15 +163,11 @@ services:
     user: "1000:1000"
     security_opt:
       - no-new-privileges:true
-    read_only: true
+    # Allow writes for n8n runtime cache and assets
     tmpfs:
       - /tmp
     volumes:
       - n8n_data:/home/node/.n8n
-      - type: tmpfs
-        target: /home/node/.cache
-        tmpfs:
-          mode: 1777
     networks:
       - internal
     labels:
@@ -185,7 +177,7 @@ services:
   n8n-worker:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n worker"]
+    command: ["n8n", "worker"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -211,15 +203,11 @@ services:
     user: "1000:1000"
     security_opt:
       - no-new-privileges:true
-    read_only: true
+    # Allow writes for n8n runtime cache and assets
     tmpfs:
       - /tmp
     volumes:
       - n8n_data:/home/node/.n8n
-      - type: tmpfs
-        target: /home/node/.cache
-        tmpfs:
-          mode: 1777
     networks:
       - internal
     labels:
@@ -229,7 +217,6 @@ services:
   n8n-scrape-main:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n start"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -259,15 +246,11 @@ services:
     user: "1000:1000"
     security_opt:
       - no-new-privileges:true
-    read_only: true
+    # Allow writes for n8n runtime cache and assets
     tmpfs:
       - /tmp
     volumes:
       - n8n_scrape_data:/home/node/.n8n
-      - type: tmpfs
-        target: /home/node/.cache
-        tmpfs:
-          mode: 1777
     networks:
       - internal
     labels:
@@ -276,7 +259,7 @@ services:
   n8n-scrape-webhook:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n webhook"]
+    command: ["n8n", "webhook"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -308,15 +291,11 @@ services:
     user: "1000:1000"
     security_opt:
       - no-new-privileges:true
-    read_only: true
+    # Allow writes for n8n runtime cache and assets
     tmpfs:
       - /tmp
     volumes:
       - n8n_scrape_data:/home/node/.n8n
-      - type: tmpfs
-        target: /home/node/.cache
-        tmpfs:
-          mode: 1777
     networks:
       - internal
     labels:
@@ -325,7 +304,7 @@ services:
   n8n-scrape-worker:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["/bin/sh","-lc","install -d -m 0777 /home/node/.cache /home/node/.cache/n8n && exec n8n worker"]
+    command: ["n8n", "worker"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -351,15 +330,11 @@ services:
     user: "1000:1000"
     security_opt:
       - no-new-privileges:true
-    read_only: true
+    # Allow writes for n8n runtime cache and assets
     tmpfs:
       - /tmp
     volumes:
       - n8n_scrape_data:/home/node/.n8n
-      - type: tmpfs
-        target: /home/node/.cache
-        tmpfs:
-          mode: 1777
     networks:
       - internal
     labels:
