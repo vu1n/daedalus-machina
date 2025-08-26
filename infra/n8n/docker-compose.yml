@@ -107,6 +107,7 @@ services:
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
       - TZ=${TZ}
+      - XDG_CACHE_HOME=/tmp/.cache
     depends_on:
       postgres:
         condition: service_healthy
@@ -150,6 +151,7 @@ services:
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
       - TZ=${TZ}
+      - XDG_CACHE_HOME=/tmp/.cache
     depends_on:
       n8n-main:
         condition: service_started
@@ -189,6 +191,7 @@ services:
       - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
       - N8N_DIAGNOSTICS_ENABLED=false
       - TZ=${TZ}
+      - XDG_CACHE_HOME=/tmp/.cache
       # Tune Node memory per worker if needed, e.g. 2048 MB
       # - NODE_OPTIONS=--max-old-space-size=2048
     depends_on:
@@ -233,6 +236,7 @@ services:
       - N8N_ENCRYPTION_KEY=${N8N_SCRAPE_ENCRYPTION_KEY}
       - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_SCRAPE_USER_MANAGEMENT_JWT_SECRET}
       - TZ=${TZ}
+      - XDG_CACHE_HOME=/tmp/.cache
     depends_on:
       postgres:
         condition: service_healthy
@@ -275,6 +279,7 @@ services:
       - N8N_ENCRYPTION_KEY=${N8N_SCRAPE_ENCRYPTION_KEY}
       - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_SCRAPE_USER_MANAGEMENT_JWT_SECRET}
       - TZ=${TZ}
+      - XDG_CACHE_HOME=/tmp/.cache
     depends_on:
       n8n-scrape-main:
         condition: service_started
@@ -313,6 +318,7 @@ services:
       - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_SCRAPE_USER_MANAGEMENT_JWT_SECRET}
       - N8N_DIAGNOSTICS_ENABLED=false
       - TZ=${TZ}
+      - XDG_CACHE_HOME=/tmp/.cache
       # Example resource tuning for scraping workers:
       # - NODE_OPTIONS=--max-old-space-size=3072
     depends_on:
