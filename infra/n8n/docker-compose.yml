@@ -119,9 +119,12 @@ services:
     read_only: true
     tmpfs:
       - /tmp
-      - /home/node/.cache
     volumes:
       - n8n_data:/home/node/.n8n
+      - type: tmpfs
+        target: /home/node/.cache
+        tmpfs:
+          mode: 1777
     networks:
       - internal
     labels:
@@ -166,9 +169,12 @@ services:
     read_only: true
     tmpfs:
       - /tmp
-      - /home/node/.cache
     volumes:
       - n8n_data:/home/node/.n8n
+      - type: tmpfs
+        target: /home/node/.cache
+        tmpfs:
+          mode: 1777
     networks:
       - internal
     labels:
@@ -207,9 +213,12 @@ services:
     read_only: true
     tmpfs:
       - /tmp
-      - /home/node/.cache
     volumes:
       - n8n_data:/home/node/.n8n
+      - type: tmpfs
+        target: /home/node/.cache
+        tmpfs:
+          mode: 1777
     networks:
       - internal
     labels:
@@ -251,9 +260,12 @@ services:
     read_only: true
     tmpfs:
       - /tmp
-      - /home/node/.cache
     volumes:
       - n8n_scrape_data:/home/node/.n8n
+      - type: tmpfs
+        target: /home/node/.cache
+        tmpfs:
+          mode: 1777
     networks:
       - internal
     labels:
@@ -297,9 +309,12 @@ services:
     read_only: true
     tmpfs:
       - /tmp
-      - /home/node/.cache
     volumes:
       - n8n_scrape_data:/home/node/.n8n
+      - type: tmpfs
+        target: /home/node/.cache
+        tmpfs:
+          mode: 1777
     networks:
       - internal
     labels:
@@ -337,9 +352,12 @@ services:
     read_only: true
     tmpfs:
       - /tmp
-      - /home/node/.cache
     volumes:
       - n8n_scrape_data:/home/node/.n8n
+      - type: tmpfs
+        target: /home/node/.cache
+        tmpfs:
+          mode: 1777
     networks:
       - internal
     labels:
