@@ -1,0 +1,10 @@
+# Root-level ignores for safety
+.env
+.env.*
+*.local.yml
+
+# Infra secrets/state
+infra/n8n/cloudflared/*.json
+infra/n8n/backup/
+infra/cloudflare/terraform/terraform.tfvars
+
