@@ -1,0 +1,381 @@
+version: "3.9"
+
+name: ${COMPOSE_PROJECT_NAME}
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  n8n_data:
+  postgres_data:
+  redis_data:
+  cloudflared:
+
+services:
+  # Ingress via Cloudflare Tunnel (named tunnel with config + credentials)
+  cloudflared:
+    image: cloudflare/cloudflared:${CLOUDFLARED_TAG}
+    restart: unless-stopped
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./cloudflared/config.yml:/etc/cloudflared/config.yml:ro
+      # Place your credentials JSON in ./cloudflared and mount it here as credentials.json
+      - ./cloudflared/${CLOUDFLARE_TUNNEL_CREDENTIALS_FILE}:/etc/cloudflared/credentials.json:ro
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  postgres:
+    image: postgres:${POSTGRES_TAG}
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=scram-sha-256
+      - TZ=${TZ}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  redis:
+    image: redis:${REDIS_TAG}
+    restart: unless-stopped
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf", "--requirepass", "${REDIS_PASSWORD}"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - internal
+
+  # n8n main instance (UI + orchestrator)
+  n8n-main:
+    image: ${N8N_IMAGE}:${N8N_TAG}
+    restart: unless-stopped
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_MODE=queue
+      - QUEUE_BULL_REDIS_HOST=redis
+      - QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PROTOCOL=https
+      - N8N_EDITOR_BASE_URL=https://${N8N_HOST}
+      - WEBHOOK_URL=https://${N8N_WEBHOOK_HOST}
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_SECURE_COOKIE=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
+      - TZ=${TZ}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # Webhook-only process
+  n8n-webhook:
+    image: ${N8N_IMAGE}:${N8N_TAG}
+    restart: unless-stopped
+    command: ["n8n", "webhook"]
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_MODE=queue
+      - QUEUE_BULL_REDIS_HOST=redis
+      - QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PROTOCOL=https
+      - N8N_EDITOR_BASE_URL=https://${N8N_HOST}
+      - WEBHOOK_URL=https://${N8N_WEBHOOK_HOST}
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_SECURE_COOKIE=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
+      - TZ=${TZ}
+    depends_on:
+      n8n-main:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # Worker process (replicas will be autoscaled)
+  n8n-worker:
+    image: ${N8N_IMAGE}:${N8N_TAG}
+    restart: unless-stopped
+    command: ["n8n", "worker"]
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_MODE=queue
+      - QUEUE_BULL_REDIS_HOST=redis
+      - QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - TZ=${TZ}
+      # Tune Node memory per worker if needed, e.g. 2048 MB
+      # - NODE_OPTIONS=--max-old-space-size=2048
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # External headless browser (prefer calling via HTTP/WS from n8n)
+  browserless:
+    image: browserless/chromium:${BROWSERLESS_TAG}
+    restart: unless-stopped
+    environment:
+      - MAX_CONCURRENT_SESSIONS=5
+      - DEFAULT_BLOCK_ADS=true
+      - CONNECTION_TIMEOUT=60000
+      # Optional token protection, then pass header from n8n HTTP node
+      # - TOKEN=${BROWSERLESS_TOKEN}
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # Queue-length based autoscaler (scales n8n-worker)
+  autoscaler:
+    build:
+      context: ./autoscaler
+    restart: unless-stopped
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - QUEUE_NAME_PREFIX=bull
+      - QUEUE_NAME=jobs
+      - N8N_WORKER_SERVICE_NAME=n8n-worker
+      - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}
+      - COMPOSE_FILE_PATH=/app/docker-compose.yml
+      - MIN_REPLICAS=${MIN_REPLICAS}
+      - MAX_REPLICAS=${MAX_REPLICAS}
+      - SCALE_UP_QUEUE_THRESHOLD=${SCALE_UP_QUEUE_THRESHOLD}
+      - SCALE_DOWN_QUEUE_THRESHOLD=${SCALE_DOWN_QUEUE_THRESHOLD}
+      - POLLING_INTERVAL_SECONDS=${POLLING_INTERVAL_SECONDS}
+      - COOLDOWN_PERIOD_SECONDS=${COOLDOWN_PERIOD_SECONDS}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker-compose.yml:/app/docker-compose.yml:ro
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # Host/container metrics (internal only)
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:${CADVISOR_TAG}
+    restart: unless-stopped
+    privileged: false
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  node-exporter:
+    image: prom/node-exporter:${NODE_EXPORTER_TAG}
+    restart: unless-stopped
+    pid: host
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # Simple healthcheck pinger for external services (e.g., Healthchecks.io)
+  health-pinger:
+    image: curlimages/curl:${CURL_TAG}
+    restart: unless-stopped
+    environment:
+      - HEALTHCHECK_URLS=${HEALTHCHECK_URLS}
+      - PING_INTERVAL_SECONDS=${PING_INTERVAL_SECONDS}
+    command: ["/bin/sh", "/app/pinger.sh"]
+    volumes:
+      - ./scripts/pinger.sh:/app/pinger.sh:ro
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # Automatic updates (label-controlled)
+  watchtower:
+    image: containrrr/watchtower:${WATCHTOWER_TAG}
+    restart: unless-stopped
+    environment:
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_SCHEDULE=${WATCHTOWER_SCHEDULE}
+      # Optional notifications (Slack, etc.) can be added here
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - internal
+
+  # Postgres S3 backups (automated)
+  db-backup:
+    profiles: ["backup"]
+    image: ghcr.io/tiredofit/db-backup:${DB_BACKUP_TAG}
+    restart: unless-stopped
+    environment:
+      - DB_TYPE=postgres
+      - DB_HOST=postgres
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_DUMP_FREQ=${DB_BACKUP_CRON}
+      - DB_DUMP_BEGIN=+0
+      - DB_CLEANUP_TIME=1728000 # 20 days (if storing locally before S3 upload)
+      - COMPRESSION=ZSTD
+      - SPLIT_DB=FALSE
+      - CONTAINER_ENABLE_SCHEDULING=TRUE
+      - DB_DUMP_TARGET=/backup
+      - ENABLE_PARALLEL_COMPRESSION=TRUE
+      # S3 storage
+      - ENABLE_S3_UPLOAD=TRUE
+      - S3_BUCKET=${S3_BUCKET}
+      - S3_REGION=${S3_REGION}
+      - S3_PATH=${S3_PATH}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ENDPOINT_URL=${AWS_ENDPOINT_URL}
+      - AWS_S3_FORCE_PATH_STYLE=${AWS_S3_FORCE_PATH_STYLE}
+      - TZ=${TZ}
+    volumes:
+      - ./backup:/backup
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # Ephemeral DB for test-restores
+  postgres-restore:
+    profiles: ["restore"]
+    image: postgres:${POSTGRES_TAG}
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=scram-sha-256
+      - TZ=${TZ}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  # Run restore jobs targeting postgres or postgres-restore
+  restore:
+    profiles: ["restore"]
+    build:
+      context: ./restore
+    environment:
+      - RESTORE_SOURCE=${RESTORE_SOURCE}
+      - S3_BUCKET=${S3_BUCKET}
+      - S3_REGION=${S3_REGION}
+      - S3_PATH=${S3_PATH}
+      - LOCAL_PATH=/backup
+      - TARGET_HOST=${RESTORE_TARGET_HOST}
+      - TARGET_DB=${POSTGRES_DB}
+      - TARGET_USER=${POSTGRES_USER}
+      - TARGET_PASSWORD=${POSTGRES_PASSWORD}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ENDPOINT_URL=${AWS_ENDPOINT_URL}
+    volumes:
+      - ./backup:/backup:ro
+    depends_on:
+      postgres-restore:
+        condition: service_started
+    networks:
+      - internal

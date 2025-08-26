@@ -1,0 +1,5 @@
+.env
+cloudflared/*.json
+backup/
+*.local.yml
+

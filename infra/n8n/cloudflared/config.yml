@@ -1,0 +1,17 @@
+# Configure a named Cloudflare Tunnel. Create the tunnel in Cloudflare Zero Trust
+# and download the credentials file to this directory, then set
+# CREDENTIALS_FILE in .env to the filename below.
+
+tunnel: REPLACE_WITH_TUNNEL_ID
+credentials-file: /etc/cloudflared/credentials.json
+
+ingress:
+  - hostname: n8n.zangosen.com
+    service: http://n8n-main:5678
+    originRequest:
+      httpHostHeader: n8n.zangosen.com
+  - hostname: webhook.zangosen.com
+    service: http://n8n-webhook:5678
+    originRequest:
+      httpHostHeader: webhook.zangosen.com
+  - service: http_status:404

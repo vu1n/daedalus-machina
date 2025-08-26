@@ -1,0 +1,10 @@
+# Fill and rename to terraform.tfvars
+account_id    = "cf_account_id"
+zone_id       = "cf_zone_id"
+email_domain  = "zangosen.com"
+ui_hostname   = "n8n.zangosen.com"
+session_duration = "24h"
+
+# Optional: define api_token here or export CLOUDFLARE_API_TOKEN
+# api_token = "..."
+
