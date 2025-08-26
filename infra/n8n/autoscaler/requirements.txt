@@ -1,4 +1,4 @@
 redis==5.0.7
 docker==7.1.0
 python-dotenv==1.0.1
-
+python-dateutil==2.9.0.post0
