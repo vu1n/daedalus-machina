@@ -24,9 +24,10 @@ This stack runs a hardened n8n with queue workers, Redis, Postgres, Cloudflare T
    - Domains: `N8N_HOST=n8n.zangosen.com`, `N8N_WEBHOOK_HOST=webhook.zangosen.com`
 3. Cloudflare Tunnel (recommended best practice):
    - Create a Named Tunnel in Cloudflare Zero Trust.
-   - Download the tunnel credentials JSON and place it into `cloudflared/`.
+   - Download the tunnel credentials JSON and place it into `cloudflared/credentials.json`.
    - Set `CLOUDFLARE_TUNNEL_ID` and `CLOUDFLARE_TUNNEL_CREDENTIALS_FILE` in `.env`.
-   - Configure Cloudflare Access on n8n.zangosen.com (SSO, MFA, group policy). Do NOT put Access in front of webhooks.
+   - Hostnames are templated from `.env` into `cloudflared/config.tmpl.yml` using envsubst at container start (no hardcoding).
+   - Configure Cloudflare Access on `${N8N_HOST}` and `${N8N_SCRAPE_HOST}` (SSO, MFA, group policy). Do NOT put Access in front of `${N8N_WEBHOOK_HOST}` or `${N8N_SCRAPE_WEBHOOK_HOST}`.
 4. Backups to S3:
    - Set `S3_BUCKET`, `S3_REGION`, and AWS creds in `.env`.
    - Enable the backup profile when starting: `docker compose --profile backup up -d db-backup`.

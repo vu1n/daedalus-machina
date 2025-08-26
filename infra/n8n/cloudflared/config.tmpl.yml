@@ -2,24 +2,24 @@
 # and download the credentials file to this directory, then set
 # CREDENTIALS_FILE in .env to the filename below.
 
-tunnel: REPLACE_WITH_TUNNEL_ID
+tunnel: ${CLOUDFLARE_TUNNEL_ID}
 credentials-file: /etc/cloudflared/credentials.json
 
 ingress:
-  - hostname: n8n.zangosen.com
+  - hostname: ${N8N_HOST}
     service: http://n8n-main:5678
     originRequest:
-      httpHostHeader: n8n.zangosen.com
-  - hostname: webhook.zangosen.com
+      httpHostHeader: ${N8N_HOST}
+  - hostname: ${N8N_WEBHOOK_HOST}
     service: http://n8n-webhook:5678
     originRequest:
-      httpHostHeader: webhook.zangosen.com
-  - hostname: n8n-scrape.zangosen.com
+      httpHostHeader: ${N8N_WEBHOOK_HOST}
+  - hostname: ${N8N_SCRAPE_HOST}
     service: http://n8n-scrape-main:5678
     originRequest:
-      httpHostHeader: n8n-scrape.zangosen.com
-  - hostname: scrape.zangosen.com
+      httpHostHeader: ${N8N_SCRAPE_HOST}
+  - hostname: ${N8N_SCRAPE_WEBHOOK_HOST}
     service: http://n8n-scrape-webhook:5678
     originRequest:
-      httpHostHeader: scrape.zangosen.com
+      httpHostHeader: ${N8N_SCRAPE_WEBHOOK_HOST}
   - service: http_status:404

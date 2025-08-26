@@ -40,8 +40,8 @@ This repo contains a hardened, Cloudflare-first n8n deployment for Netcup RS2000
 
 2) Cloudflare Tunnel
 - Place the Named Tunnel credentials JSON in `infra/n8n/cloudflared/credentials.json`.
-- Edit `infra/n8n/cloudflared/config.yml` and set your tunnel ID.
-- Protect `n8n.zangosen.com` and `n8n-scrape.zangosen.com` with Cloudflare Access. Keep `webhook` and `scrape` public.
+- Set hostnames and `CLOUDFLARE_TUNNEL_ID` in `infra/n8n/.env`; the `cloudflared` container renders `config.tmpl.yml` with envsubst at runtime (no hardcoded domains).
+- Protect UI hostnames with Cloudflare Access; keep webhook hostnames public.
 
 3) Start the stack
 - From `infra/n8n`: `docker compose --env-file .env up -d`
@@ -68,4 +68,3 @@ This repo contains a hardened, Cloudflare-first n8n deployment for Netcup RS2000
 - Add Cloudflare Access via Terraform in `infra/cloudflare/terraform` (optional)
 - Add alerts for persistent backlog (via Healthchecks.io or your tooling)
 - Pin n8n images to a chosen version and only bump intentionally
-

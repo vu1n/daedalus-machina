@@ -5,6 +5,12 @@ email_domain  = "zangosen.com"
 ui_hostname   = "n8n.zangosen.com"
 session_duration = "24h"
 
+# DNS + Tunnel
+tunnel_id = "your-tunnel-uuid"
+webhook_hostname = "webhook.zangosen.com"
+scrape_ui_hostname = "n8n-scrape.zangosen.com"
+scrape_webhook_hostname = "scrape.zangosen.com"
+proxied = true
+
 # Optional: define api_token here or export CLOUDFLARE_API_TOKEN
 # api_token = "..."
-
