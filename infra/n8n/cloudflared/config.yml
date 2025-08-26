@@ -14,4 +14,12 @@ ingress:
     service: http://n8n-webhook:5678
     originRequest:
       httpHostHeader: webhook.zangosen.com
+  - hostname: n8n-scrape.zangosen.com
+    service: http://n8n-scrape-main:5678
+    originRequest:
+      httpHostHeader: n8n-scrape.zangosen.com
+  - hostname: scrape.zangosen.com
+    service: http://n8n-scrape-webhook:5678
+    originRequest:
+      httpHostHeader: scrape.zangosen.com
   - service: http_status:404

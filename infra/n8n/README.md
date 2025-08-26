@@ -8,6 +8,7 @@ This stack runs a hardened n8n with queue workers, Redis, Postgres, Cloudflare T
 - `cloudflared/` — tunnel config + credentials JSON
 - `redis/redis.conf` — hardened Redis
 - `autoscaler/` — queue-length autoscaler
+ - `postgres/init/` — init SQL for creating the scrape DB
 
 ## Prereqs
 - Docker + Docker Compose v2
@@ -37,11 +38,14 @@ Docker will create an isolated network and volumes. No host ports are published.
 Wait until `postgres` and `redis` are healthy, then `n8n-main` starts. Cloudflared establishes the tunnel and serves:
 - UI: https://n8n.zangosen.com (behind Cloudflare Access)
 - Webhooks: https://webhook.zangosen.com
+ - Scrape UI: https://n8n-scrape.zangosen.com (behind Cloudflare Access)
+ - Scrape Webhooks: https://scrape.zangosen.com
 
 ## Autoscaling
 - The autoscaler checks Redis queue length (BullMQ) every `POLLING_INTERVAL_SECONDS`.
 - Scales `n8n-worker` by 1 within `[MIN_REPLICAS, MAX_REPLICAS]` with cooldown `COOLDOWN_PERIOD_SECONDS`.
 - Tune thresholds depending on your workload.
+ - A separate `autoscaler-scrape` controls `n8n-scrape-worker` against the dedicated Redis `redis-scrape` and DB `n8n_scrape`.
 
 ## Updates
 - Watchtower updates only services with label `com.centurylinklabs.watchtower.enable=true` (n8n, cloudflared, browserless, autoscaler, db-backup). Datastores (postgres, redis) are excluded to avoid surprise upgrades.
@@ -57,6 +61,7 @@ Wait until `postgres` and `redis` are healthy, then `n8n-main` starts. Cloudflar
 - Postgres is internal-only with SCRAM auth.
 - n8n runs as non-root and with read-only root FS and tmpfs.
 - Set strong secrets and rotate periodically.
+ - Scraping runs on a separate n8n instance with its own DB (`POSTGRES_SCRAPE_DB`) and Redis (`redis-scrape`). Keep its UI behind Access and only expose webhooks.
 
 ## Cloudflare Access
 - Create an Access application for `n8n.zangosen.com`.
@@ -67,6 +72,10 @@ Wait until `postgres` and `redis` are healthy, then `n8n-main` starts. Cloudflar
 - `cadvisor` exposes container metrics on port 8080 internally.
 - `node-exporter` exposes node metrics on port 9100 internally.
 - Optionally add Cloudflare tunnel routes for a private metrics hostname behind Access if you need remote dashboards.
+
+## Calling the scraping instance (Scrape-as-a-Service)
+- Preferred: Main n8n calls scraping workflows via HTTP Request node to `https://scrape.zangosen.com/webhook/<id>`. For long scrapes, use `Respond to Webhook` pattern and a callback to a main-instance webhook when done.
+- Keep browser usage in scraping instance by calling the `browserless` service from scraping workflows. Avoid running browser in the main instance.
 
 ## Workflow Health Pings
 - Set `HEALTHCHECK_URLS` in `.env` to a comma-separated list (e.g., Healthchecks.io URLs) and start `health-pinger` (included by default). It pings every `PING_INTERVAL_SECONDS`.

@@ -8,8 +8,10 @@ networks:
 
 volumes:
   n8n_data:
+  n8n_scrape_data:
   postgres_data:
   redis_data:
+  redis_scrape_data:
   cloudflared:
 
 services:
@@ -44,6 +46,7 @@ services:
       retries: 12
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
     networks:
       - internal
 
@@ -58,6 +61,21 @@ services:
       retries: 20
     volumes:
       - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - internal
+
+  redis-scrape:
+    image: redis:${REDIS_TAG}
+    restart: unless-stopped
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf", "--requirepass", "${REDIS_SCRAPE_PASSWORD}"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $${REDIS_SCRAPE_PASSWORD} ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - redis_scrape_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     networks:
       - internal
@@ -188,6 +206,130 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
 
+  # Scraping-dedicated n8n instance (separate DB + Redis)
+  n8n-scrape-main:
+    image: ${N8N_IMAGE}:${N8N_TAG}
+    restart: unless-stopped
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_SCRAPE_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_MODE=queue
+      - QUEUE_BULL_REDIS_HOST=redis-scrape
+      - QUEUE_BULL_REDIS_PASSWORD=${REDIS_SCRAPE_PASSWORD}
+      - N8N_HOST=${N8N_SCRAPE_HOST}
+      - N8N_PROTOCOL=https
+      - N8N_EDITOR_BASE_URL=https://${N8N_SCRAPE_HOST}
+      - WEBHOOK_URL=https://${N8N_SCRAPE_WEBHOOK_HOST}
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_SECURE_COOKIE=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_ENCRYPTION_KEY=${N8N_SCRAPE_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_SCRAPE_USER_MANAGEMENT_JWT_SECRET}
+      - TZ=${TZ}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-scrape:
+        condition: service_healthy
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - n8n_scrape_data:/home/node/.n8n
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  n8n-scrape-webhook:
+    image: ${N8N_IMAGE}:${N8N_TAG}
+    restart: unless-stopped
+    command: ["n8n", "webhook"]
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_SCRAPE_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_MODE=queue
+      - QUEUE_BULL_REDIS_HOST=redis-scrape
+      - QUEUE_BULL_REDIS_PASSWORD=${REDIS_SCRAPE_PASSWORD}
+      - N8N_HOST=${N8N_SCRAPE_HOST}
+      - N8N_PROTOCOL=https
+      - N8N_EDITOR_BASE_URL=https://${N8N_SCRAPE_HOST}
+      - WEBHOOK_URL=https://${N8N_SCRAPE_WEBHOOK_HOST}
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_SECURE_COOKIE=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_ENCRYPTION_KEY=${N8N_SCRAPE_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_SCRAPE_USER_MANAGEMENT_JWT_SECRET}
+      - TZ=${TZ}
+    depends_on:
+      n8n-scrape-main:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis-scrape:
+        condition: service_healthy
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - n8n_scrape_data:/home/node/.n8n
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  n8n-scrape-worker:
+    image: ${N8N_IMAGE}:${N8N_TAG}
+    restart: unless-stopped
+    command: ["n8n", "worker"]
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_SCRAPE_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_MODE=queue
+      - QUEUE_BULL_REDIS_HOST=redis-scrape
+      - QUEUE_BULL_REDIS_PASSWORD=${REDIS_SCRAPE_PASSWORD}
+      - N8N_ENCRYPTION_KEY=${N8N_SCRAPE_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_SCRAPE_USER_MANAGEMENT_JWT_SECRET}
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - TZ=${TZ}
+      # Example resource tuning for scraping workers:
+      # - NODE_OPTIONS=--max-old-space-size=3072
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-scrape:
+        condition: service_healthy
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - n8n_scrape_data:/home/node/.n8n
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
   # External headless browser (prefer calling via HTTP/WS from n8n)
   browserless:
     image: browserless/chromium:${BROWSERLESS_TAG}
@@ -245,6 +387,42 @@ services:
       - SECONDARY_MIN_LIFETIME=${SECONDARY_MIN_LIFETIME}
       - SECONDARY_STEP_UP=${SECONDARY_STEP_UP}
       - SECONDARY_STEP_DOWN=${SECONDARY_STEP_DOWN}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker-compose.yml:/app/docker-compose.yml:ro
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  autoscaler-scrape:
+    build:
+      context: ./autoscaler
+    restart: unless-stopped
+    environment:
+      - REDIS_HOST=redis-scrape
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_SCRAPE_PASSWORD}
+      - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}
+      - COMPOSE_FILE_PATH=/app/docker-compose.yml
+      - POLLING_INTERVAL_SECONDS=${SCRAPE_POLLING_INTERVAL_SECONDS}
+      - PRIMARY_SERVICE_NAME=n8n-scrape-worker
+      - PRIMARY_MIN_REPLICAS=${SCRAPE_MIN_REPLICAS}
+      - PRIMARY_MAX_REPLICAS=${SCRAPE_MAX_REPLICAS}
+      - PRIMARY_SMA_WINDOW=${SCRAPE_SMA_WINDOW}
+      - PRIMARY_UP_SMA_THRESHOLD=${SCRAPE_SCALE_UP_QUEUE_THRESHOLD}
+      - PRIMARY_DOWN_SMA_THRESHOLD=${SCRAPE_SCALE_DOWN_QUEUE_THRESHOLD}
+      - PRIMARY_RATE_DOWN_THRESHOLD=${SCRAPE_RATE_DOWN_THRESHOLD}
+      - PRIMARY_COOLDOWN_UP=${SCRAPE_SCALE_UP_COOLDOWN_SECONDS}
+      - PRIMARY_COOLDOWN_DOWN=${SCRAPE_SCALE_DOWN_COOLDOWN_SECONDS}
+      - PRIMARY_MIN_LIFETIME=${SCRAPE_MIN_WORKER_LIFETIME_SECONDS}
+      - PRIMARY_STEP_UP=${SCRAPE_SCALE_STEP_UP}
+      - PRIMARY_STEP_DOWN=${SCRAPE_SCALE_STEP_DOWN}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./docker-compose.yml:/app/docker-compose.yml:ro
