@@ -58,6 +58,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
@@ -73,6 +75,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    environment:
+      - REDIS_SCRAPE_PASSWORD=${REDIS_SCRAPE_PASSWORD}
     volumes:
       - redis_scrape_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
