@@ -428,9 +428,7 @@ services:
   # Farfalle (optional alt UI) - built from upstream, joins internal network
   farfalle:
     profiles: ["search"]
-    build:
-      context: ../search/farfalle-upstream
-    image: farfalle:local
+    image: ghcr.io/rashadphz/farfalle:main
     restart: unless-stopped
     environment:
       - SEARXNG_URL=${SEARXNG_BASE_URL}
