@@ -1,0 +1,18 @@
+# Perplexica config example. Copy to infra/n8n/config.toml and adjust as needed.
+
+[server]
+port = 3000
+data_dir = "/home/perplexica"
+
+[database]
+provider = "sqlite"
+url = "file:/home/perplexica/data/perplexica.db"
+
+[vector]
+provider = "qdrant"
+url = "http://qdrant:6333"
+
+[searxng]
+base_url = "http://searxng:8080"
+api_url  = "http://searxng:8080"
+

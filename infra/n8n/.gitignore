@@ -2,4 +2,5 @@
 cloudflared/*.json
 backup/
 *.local.yml
+config.toml
 

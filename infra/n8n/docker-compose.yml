@@ -417,7 +417,7 @@ services:
       - perplexica_uploads:/home/perplexica/uploads
       - ./config.toml:/home/perplexica/config.toml:ro
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:3000/health || wget -qO- 127.0.0.1:3000 || exit 1"]
+      test: ["CMD-SHELL", "node -e \"http=require('http');http.get('http://127.0.0.1:3000',r=>process.exit((r.statusCode>=200&&r.statusCode<500)?0:1)).on('error',()=>process.exit(1));\" "]
       interval: 10s
       timeout: 5s
       retries: 12
