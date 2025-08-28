@@ -3,6 +3,7 @@
 .env.*
 *.local.yml
 config.toml
+*.config.toml
 
 # Infra secrets/state
 infra/n8n/cloudflared/*.json
