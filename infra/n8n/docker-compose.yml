@@ -371,7 +371,6 @@ services:
       - SEARXNG_SECRET_KEY=${SEARXNG_SECRET_KEY}
     volumes:
       - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
-      - ./searxng/limiter.toml:/etc/searxng/limiter.toml:ro
       - searxng_data:/etc/searxng/filters
     networks:
       - internal

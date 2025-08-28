@@ -6,8 +6,9 @@ server:
   port: 8080
   bind_address: 0.0.0.0
   secret_key: ${SEARXNG_SECRET_KEY}
-  limiter: false
 botdetection:
+  enabled: false
+limiter:
   enabled: false
 ui:
   static_use_hash: true
@@ -34,4 +35,3 @@ outgoing:
   useragent_suffix: "daedalus-machina"
   pool_connections: 10
   pool_maxsize: 10
-
