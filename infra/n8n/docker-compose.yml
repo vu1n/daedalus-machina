@@ -392,7 +392,10 @@ services:
   # Perplexica (primary UI/API) - vendored here, joins internal network
   perplexica:
     profiles: ["search"]
-    image: itzcrazykns1337/perplexica:main
+    build:
+      context: ../search/perplexica-upstream
+      dockerfile: app.dockerfile
+    image: perplexica:local
     restart: unless-stopped
     environment:
       - SEARXNG_BASE_URL=${SEARXNG_BASE_URL}
