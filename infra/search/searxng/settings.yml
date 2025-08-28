@@ -1,0 +1,35 @@
+# Minimal SearXNG settings. Fill in engine API keys as needed.
+use_default_settings: true
+general:
+  debug: false
+  instance_name: ${SEARXNG_INSTANCE_NAME}
+server:
+  port: 8080
+  bind_address: 0.0.0.0
+  secret_key: ${SEARXNG_SECRET_KEY}
+  limiter: true
+ui:
+  static_use_hash: true
+  default_locale: en
+  theme_args:
+    simple_style: dark
+engines:
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+  - name: wikipedia
+    engine: wikipedia
+    shortcut: wp
+  # Example paid engines (uncomment and add keys)
+  # - name: google
+  #   engine: google
+  #   api_key: "your_key"
+  #   cx: "your_cx"
+  # - name: bing
+  #   engine: bing
+  #   api_key: "your_key"
+outgoing:
+  request_timeout: 5.0
+  useragent_suffix: "daedalus-machina"
+  pool_connections: 10
+  pool_maxsize: 10

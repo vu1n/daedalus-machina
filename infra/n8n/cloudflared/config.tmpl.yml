@@ -22,4 +22,12 @@ ingress:
     service: http://n8n-scrape-webhook:5678
     originRequest:
       httpHostHeader: ${N8N_SCRAPE_WEBHOOK_HOST}
+  - hostname: ${PERPLEXICA_HOST}
+    service: http://perplexica:3000
+    originRequest:
+      httpHostHeader: ${PERPLEXICA_HOST}
+  - hostname: ${FARFALLE_HOST}
+    service: http://farfalle:3000
+    originRequest:
+      httpHostHeader: ${FARFALLE_HOST}
   - service: http_status:404

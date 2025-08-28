@@ -11,6 +11,7 @@ volumes:
   redis_data:
   redis_scrape_data:
   cloudflared:
+  searxng_data:
 
 services:
   # Ingress via Cloudflare Tunnel (named tunnel with config + credentials)
@@ -350,6 +351,24 @@ services:
       - CONNECTION_TIMEOUT=60000
       # Optional token protection, then pass header from n8n HTTP node
       # - TOKEN=${BROWSERLESS_TOKEN}
+    networks:
+      - internal
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # Private SearXNG instance for metasearch (shared backend for Perplexica/Farfalle)
+  searxng:
+    profiles: ["search"]
+    image: searxng/searxng:${SEARXNG_TAG}
+    restart: unless-stopped
+    environment:
+      - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS}
+      - INSTANCE_NAME=${SEARXNG_INSTANCE_NAME}
+      - SEARXNG_BASE_URL=${SEARXNG_BASE_URL}
+      - SEARXNG_SECRET_KEY=${SEARXNG_SECRET_KEY}
+    volumes:
+      - ../search/searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - searxng_data:/etc/searxng/filters
     networks:
       - internal
     labels:

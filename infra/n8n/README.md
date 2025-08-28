@@ -40,8 +40,10 @@ Docker will create an isolated network and volumes. No host ports are published.
 Wait until `postgres` and `redis` are healthy, then `n8n-main` starts. Cloudflared establishes the tunnel and serves:
 - UI: https://n8n.zangosen.com (behind Cloudflare Access)
 - Webhooks: https://webhook.zangosen.com
- - Scrape UI: https://n8n-scrape.zangosen.com (behind Cloudflare Access)
- - Scrape Webhooks: https://scrape.zangosen.com
+- Scrape UI: https://n8n-scrape.zangosen.com (behind Cloudflare Access)
+- Scrape Webhooks: https://scrape.zangosen.com
+ - Perplexica: https://perplexica.zangosen.com (behind Cloudflare Access)
+ - Farfalle: https://farfalle.zangosen.com (behind Cloudflare Access)
 
 ## Autoscaling
 - Smarter scaling using SMA + rate-of-change:
@@ -95,3 +97,7 @@ Wait until `postgres` and `redis` are healthy, then `n8n-main` starts. Cloudflar
 - Start workers at 2–4 min, max 6–8.
 - Prefer more workers with lower per-worker concurrency for stability.
 - Keep the browserless concurrency modest (5–10) to avoid memory spikes.
+## Search (SearXNG + Perplexica + Farfalle)
+- Private SearXNG instance is included under the `search` profile.
+- Start only SearXNG: `docker compose --env-file .env --profile search up -d searxng`
+- See `infra/search/README.md` for integrating Perplexica and Farfalle using their upstream compose files joined to `${COMPOSE_PROJECT_NAME}_internal`.
