@@ -439,11 +439,6 @@ services:
     depends_on:
       searxng:
         condition: service_started
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qS -O- http://localhost:3000 | head -n1 | grep -E 'HTTP/'"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
     labels:
       - com.centurylinklabs.watchtower.enable=true
 
