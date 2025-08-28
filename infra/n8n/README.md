@@ -99,5 +99,13 @@ Wait until `postgres` and `redis` are healthy, then `n8n-main` starts. Cloudflar
 - Keep the browserless concurrency modest (5–10) to avoid memory spikes.
 ## Search (SearXNG + Perplexica + Farfalle)
 - Private SearXNG instance is included under the `search` profile.
-- Start only SearXNG: `docker compose --env-file .env --profile search up -d searxng`
-- See `infra/search/README.md` for integrating Perplexica and Farfalle using their upstream compose files joined to `${COMPOSE_PROJECT_NAME}_internal`.
+- Perplexica and Qdrant are vendored into this compose under the `search` profile; Farfalle remains optional via upstream.
+- Start SearXNG + Qdrant + Perplexica:
+  - `docker compose --env-file .env --profile search up -d searxng qdrant perplexica`
+- Internal tests:
+  - `docker compose run --rm health-pinger sh -lc 'wget -qS -O- http://searxng:8080 | head -n1'`
+  - `docker compose run --rm health-pinger sh -lc 'wget -qS -O- http://perplexica:3000 | head -n1'`
+- Cloudflare: add Public Hostnames (token mode) or use JSON-mode mappings
+  - `perplexica.zangosen.com` → `http://perplexica:3000`
+  - Restart tunnel: `docker compose restart cloudflared`
+- Farfalle: see `infra/search/README.md` to run upstream and join the internal network (alias `farfalle`).
