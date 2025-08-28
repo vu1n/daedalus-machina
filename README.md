@@ -52,6 +52,14 @@ This repo contains a hardened, Cloudflare-first n8n deployment for Netcup RS2000
 - Test restore regularly (see infra/n8n/README.md).
 
 ## Autoscaling
+- Pin Image Versions (recommended)
+  - For reproducible updates, pin images to digests in `infra/n8n/.env`:
+    - `SEARXNG_IMAGE_REF=searxng/searxng@sha256:<digest>`
+    - `QDRANT_IMAGE_REF=qdrant/qdrant@sha256:<digest>`
+    - `PERPLEXICA_IMAGE_REF=itzcrazykns1337/perplexica@sha256:<digest>`
+  - Get the digest of your current image on the server:
+    - `docker inspect --format='{{range .RepoDigests}}{{println .}}{{end}}' <image_or_container>`
+  - Update the env vars and restart the affected services.
 - The autoscaler samples Redis backlog, computes an SMA and rate-of-change, and scales:
   - Up: when SMA ≥ threshold (sustained backlog)
   - Down: when SMA ≤ low threshold AND rate is negative (queue draining)

@@ -362,7 +362,7 @@ services:
   # Private SearXNG instance for metasearch (shared backend for Perplexica/Farfalle)
   searxng:
     profiles: ["search"]
-    image: searxng/searxng:${SEARXNG_TAG}
+    image: ${SEARXNG_IMAGE_REF}
     restart: unless-stopped
     environment:
       - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-2}
@@ -381,7 +381,7 @@ services:
   # Qdrant vector DB for Perplexica
   qdrant:
     profiles: ["search"]
-    image: qdrant/qdrant:latest
+    image: ${QDRANT_IMAGE_REF}
     restart: unless-stopped
     volumes:
       - qdrant_data:/qdrant/storage
@@ -393,11 +393,7 @@ services:
   # Perplexica (primary UI/API) - vendored here, joins internal network
   perplexica:
     profiles: ["search"]
-    # build:
-    #   context: ../search/perplexica-upstream
-    #   dockerfile: app.dockerfile
-    # image: perplexica:local
-    image: itzcrazykns1337/perplexica:main
+    image: ${PERPLEXICA_IMAGE_REF}
     restart: unless-stopped
     environment:
       - SEARXNG_BASE_URL=${SEARXNG_BASE_URL}
