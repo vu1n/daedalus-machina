@@ -625,7 +625,6 @@ services:
       - S3_PATH=${S3_PATH}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_ENDPOINT_URL=${AWS_ENDPOINT_URL}
       - AWS_S3_FORCE_PATH_STYLE=${AWS_S3_FORCE_PATH_STYLE}
       - TZ=${TZ}
     volumes:
@@ -672,7 +671,6 @@ services:
       - TARGET_PASSWORD=${POSTGRES_PASSWORD}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_ENDPOINT_URL=${AWS_ENDPOINT_URL}
     volumes:
       - ./backup:/backup:ro
     depends_on:
