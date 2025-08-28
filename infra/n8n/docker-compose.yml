@@ -392,10 +392,11 @@ services:
   # Perplexica (primary UI/API) - vendored here, joins internal network
   perplexica:
     profiles: ["search"]
-    build:
-      context: ../search/perplexica-upstream
-      dockerfile: app.dockerfile
-    image: perplexica:local
+    # build:
+    #   context: ../search/perplexica-upstream
+    #   dockerfile: app.dockerfile
+    # image: perplexica:local
+    image: itzcrazykns1337/perplexica:main
     restart: unless-stopped
     environment:
       - SEARXNG_BASE_URL=${SEARXNG_BASE_URL}
@@ -414,7 +415,7 @@ services:
     volumes:
       - perplexica_data:/home/perplexica/data
       - perplexica_uploads:/home/perplexica/uploads
-      - ../search/perplexica/config.toml:/home/perplexica/config.toml:ro
+      - ./config.toml:/home/perplexica/config.toml:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- 127.0.0.1:3000/health || wget -qO- 127.0.0.1:3000 || exit 1"]
       interval: 10s
