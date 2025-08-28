@@ -2,14 +2,62 @@ use_default_settings: true
 general:
   debug: false
   instance_name: ${SEARXNG_INSTANCE_NAME}
+  privacypolicy_url: false
+  contact_url: false
+  enable_metrics: false
+search:
+  # Filter results. 0: None, 1: Moderate, 2: Strict
+  safe_search: 0
+  # Existing autocomplete backends: "360search", "baidu", "brave", "dbpedia", "duckduckgo", "google", "yandex",
+  # "mwmbl", "naver", "seznam", "sogou", "startpage", "stract", "swisscows", "quark", "qwant", "wikipedia" -
+  # leave blank to turn it off by default.
+  autocomplete: "duckduckgo"
+  # minimun characters to type before autocompleter starts
+  autocomplete_min: 4
+  # backend for the favicon near URL in search results.
+  # Available resolvers: "allesedv", "duckduckgo", "google", "yandex" - leave blank to turn it off by default.
+  favicon_resolver: ""
+  # Default search language - leave blank to detect from browser information or
+  # use codes from 'languages.py'
+  default_lang: "en-US"
+  # max_page: 0  # if engine supports paging, 0 means unlimited numbers of pages
+  # Available languages
+  # languages:
+  #   - all
+  #   - en
+  #   - en-US
+  #   - de
+  #   - it-IT
+  #   - fr
+  #   - fr-BE
+  # ban time in seconds after engine errors
+  ban_time_on_fail: 5
+  # max ban time in seconds after engine errors
+  max_ban_time_on_fail: 120
+  suspended_times:
+    # Engine suspension time after error (in seconds; set to 0 to disable)
+    # For error "Access denied" and "HTTP error [402, 403]"
+    SearxEngineAccessDenied: 86400
+    # For error "CAPTCHA"
+    SearxEngineCaptcha: 86400
+    # For error "Too many request" and "HTTP error 429"
+    SearxEngineTooManyRequests: 3600
+    # Cloudflare CAPTCHA
+    cf_SearxEngineCaptcha: 1296000
+    cf_SearxEngineAccessDenied: 86400
+    # ReCAPTCHA
+    recaptcha_SearxEngineCaptcha: 604800
+
+  # remove format to deny access, use lower case.
+  # formats: [html, csv, json, rss]
+  formats: [html, csv, json]
 server:
   port: 8080
-  bind_address: 0.0.0.0
+  bind_address: 127.0.0.1
+  base_url: false
   secret_key: ${SEARXNG_SECRET_KEY}
-botdetection:
-  enabled: false
-limiter:
-  enabled: false
+  limiter: false
+  public_instance: false
 ui:
   static_use_hash: true
   default_locale: en
@@ -19,9 +67,81 @@ engines:
   - name: duckduckgo
     engine: duckduckgo
     shortcut: ddg
+
+  - name: duckduckgo images
+    engine: duckduckgo_extra
+    categories: [images, web]
+    ddg_category: images
+    shortcut: ddi
+    disabled: true
+
+  - name: duckduckgo videos
+    engine: duckduckgo_extra
+    categories: [videos, web]
+    ddg_category: videos
+    shortcut: ddv
+    disabled: true
+
+  - name: duckduckgo news
+    engine: duckduckgo_extra
+    categories: [news, web]
+    ddg_category: news
+    shortcut: ddn
+    disabled: true
+
+  - name: duckduckgo weather
+    engine: duckduckgo_weather
+    shortcut: ddw
+    disabled: true
+
+  - name: apple maps
+    engine: apple_maps
+    shortcut: apm
+    disabled: true
+    timeout: 5.0
+
   - name: wikipedia
     engine: wikipedia
     shortcut: wp
+
+  - name: lobste.rs
+    engine: xpath
+    search_url: https://lobste.rs/search?q={query}&what=stories&order=relevance
+    results_xpath: //li[contains(@class, "story")]
+    url_xpath: .//a[@class="u-url"]/@href
+    title_xpath: .//a[@class="u-url"]
+    content_xpath: .//a[@class="domain"]
+    categories: it
+    shortcut: lo
+    timeout: 5.0
+    disabled: true
+    about:
+      website: https://lobste.rs/
+      wikidata_id: Q60762874
+      official_api_documentation:
+      use_official_api: false
+      require_api_key: false
+      results: HTML
+
+  - name: yahoo
+    engine: yahoo
+    shortcut: yh
+    disabled: true
+
+  - name: yahoo news
+    engine: yahoo_news
+    shortcut: yhn
+
+  - name: youtube
+    shortcut: yt
+    # You can use the engine using the official stable API, but you need an API
+    # key See: https://console.developers.google.com/project
+    #
+    # engine: youtube_api
+    # api_key: 'apikey' # required!
+    #
+    # Or you can use the html non-stable engine, activated by default
+    engine: youtube_noapi
   # Example paid engines (uncomment and add keys)
   # - name: google
   #   engine: google
