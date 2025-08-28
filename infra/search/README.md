@@ -15,7 +15,7 @@ SearXNG is not exposed publicly; Perplexica/Farfalle are behind Cloudflare Acces
   - `SEARXNG_INSTANCE_NAME=Daedalus SearXNG`
   - `SEARXNG_BASE_URL=http://searxng:8080`
   - `SEARXNG_SECRET_KEY=<random>` (generate a strong secret)
-- (Optional) Edit `infra/search/searxng/settings.yml` to add engine keys (Bing/Google/etc.).
+- (Optional) Edit `infra/n8n/searxng/settings.yml` to add engine keys (Bing/Google/etc.). Limiter and bot detection are already disabled for internal use.
 - Start SearXNG:
   - `cd infra/n8n`
   - `docker compose --env-file .env --profile search up -d searxng`
@@ -55,4 +55,3 @@ Farfalle is another UI that uses SearXNG.
 - We keep SearXNG private for security. If you later need public access, add a Cloudflare hostname and consider adding Filtron/Morty.
 - n8n can call Perplexica’s API internally via `http://perplexica:3000` or SearXNG via `http://searxng:8080`.
 - If you prefer a single compose, you can vendor Perplexica/Farfalle services into `infra/n8n/docker-compose.yml` under the `search` profile. The current approach avoids guessing upstream image tags and keeps maintenance closer to upstream updates.
-
