@@ -374,6 +374,53 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
 
+  # Perplexica (primary UI/API) - built from upstream, joins internal network
+  perplexica:
+    profiles: ["search"]
+    build:
+      context: ../search/perplexica-upstream
+    image: perplexica:local
+    restart: unless-stopped
+    environment:
+      - SEARXNG_BASE_URL=${SEARXNG_BASE_URL}
+      # Add your LLM keys as needed (leave unset if using other providers)
+      - OPENAI_API_KEY=${PERPLEXICA_OPENAI_API_KEY}
+      - GEMINI_API_KEY=${PERPLEXICA_GEMINI_API_KEY}
+    networks:
+      - internal
+    depends_on:
+      searxng:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qS -O- http://localhost:3000 | head -n1 | grep -E 'HTTP/'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # Farfalle (optional alt UI) - built from upstream, joins internal network
+  farfalle:
+    profiles: ["search"]
+    build:
+      context: ../search/farfalle-upstream
+    image: farfalle:local
+    restart: unless-stopped
+    environment:
+      - SEARXNG_URL=${SEARXNG_BASE_URL}
+    networks:
+      - internal
+    depends_on:
+      searxng:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qS -O- http://localhost:3000 | head -n1 | grep -E 'HTTP/'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
   # Queue-length based autoscaler (scales n8n-worker)
   autoscaler:
     build:
