@@ -386,12 +386,6 @@ services:
       - qdrant_data:/qdrant/storage
     networks:
       - internal
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:6333/readyz | grep -q ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 10s
     labels:
       - com.centurylinklabs.watchtower.enable=true
 
@@ -413,10 +407,11 @@ services:
       searxng:
         condition: service_started
       qdrant:
-        condition: service_healthy
+        condition: service_started
     volumes:
       - perplexica_data:/home/perplexica/data
       - perplexica_uploads:/home/perplexica/uploads
+      - ../search/perplexica/config.toml:/home/perplexica/config.toml:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- 127.0.0.1:3000/health || wget -qO- 127.0.0.1:3000 || exit 1"]
       interval: 10s
