@@ -370,7 +370,8 @@ services:
       - SEARXNG_BASE_URL=${SEARXNG_BASE_URL}
       - SEARXNG_SECRET_KEY=${SEARXNG_SECRET_KEY}
     volumes:
-      - ../search/searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - ./searxng/limiter.toml:/etc/searxng/limiter.toml:ro
       - searxng_data:/etc/searxng/filters
     networks:
       - internal
