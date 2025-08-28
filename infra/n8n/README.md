@@ -43,7 +43,6 @@ Wait until `postgres` and `redis` are healthy, then `n8n-main` starts. Cloudflar
 - Scrape UI: https://n8n-scrape.zangosen.com (behind Cloudflare Access)
 - Scrape Webhooks: https://scrape.zangosen.com
  - Perplexica: https://perplexica.zangosen.com (behind Cloudflare Access)
- - Farfalle: https://farfalle.zangosen.com (behind Cloudflare Access)
 
 ## Autoscaling
 - Smarter scaling using SMA + rate-of-change:
@@ -108,4 +107,3 @@ Wait until `postgres` and `redis` are healthy, then `n8n-main` starts. Cloudflar
 - Cloudflare: add Public Hostnames (token mode) or use JSON-mode mappings
   - `perplexica.zangosen.com` → `http://perplexica:3000`
   - Restart tunnel: `docker compose restart cloudflared`
-- Farfalle: see `infra/search/README.md` to run upstream and join the internal network (alias `farfalle`).

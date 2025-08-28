@@ -426,20 +426,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
 
-  # Farfalle (optional alt UI) - built from upstream, joins internal network
-  farfalle:
-    profiles: ["search"]
-    image: ghcr.io/rashadphz/farfalle:main
-    restart: unless-stopped
-    environment:
-      - SEARXNG_URL=${SEARXNG_BASE_URL}
-    networks:
-      - internal
-    depends_on:
-      searxng:
-        condition: service_started
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
+
 
   # Queue-length based autoscaler (scales n8n-worker)
   autoscaler:
