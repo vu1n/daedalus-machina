@@ -135,7 +135,7 @@ services:
   n8n-webhook:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["n8n", "webhook"]
+    command: ["webhook"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -181,7 +181,7 @@ services:
   n8n-worker:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["n8n", "worker"]
+    command: ["worker"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -263,7 +263,7 @@ services:
   n8n-scrape-webhook:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["n8n", "webhook"]
+    command: ["webhook"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -308,7 +308,7 @@ services:
   n8n-scrape-worker:
     image: ${N8N_IMAGE}:${N8N_TAG}
     restart: unless-stopped
-    command: ["n8n", "worker"]
+    command: ["worker"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
