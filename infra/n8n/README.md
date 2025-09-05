@@ -51,6 +51,7 @@ Wait until `postgres` and `redis` are healthy, then `n8n-main` starts. Cloudflar
   - Asymmetric cooldowns (fast up, slow down) and minimum worker lifetime
 - Two autoscalers: `autoscaler` (main) and `autoscaler-scrape` (scraping)
 - Tune via `.env`: `SMA_WINDOW`, `SCALE_UP_*`, `SCALE_DOWN_*`, `RATE_DOWN_THRESHOLD`, cooldowns, min lifetime, and steps
+ - Baseline enforcement: autoscaler now guarantees at least `MIN_REPLICAS` are running even when backlog is low (prevents "Starting soon" with zero workers).
 
 ## Updates
 - Watchtower updates only services with label `com.centurylinklabs.watchtower.enable=true` (n8n, cloudflared, browserless, autoscaler, db-backup). Datastores (postgres, redis) are excluded to avoid surprise upgrades.

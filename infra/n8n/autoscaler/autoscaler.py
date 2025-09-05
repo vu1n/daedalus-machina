@@ -164,6 +164,15 @@ def load_pool_from_env(prefix: str) -> Optional[Tuple[PoolConfig, PoolState]]:
 
 def decide_and_scale(dc: docker.DockerClient, r: redis.Redis, pool: PoolState):
     now = time.time()
+    # Check current replicas first to enforce a baseline immediately
+    current, min_uptime = current_replicas_and_min_uptime(dc, pool.cfg.name, COMPOSE_PROJECT_NAME)
+    if current < pool.cfg.min_replicas:
+        desired = pool.cfg.min_replicas
+        if scale_service(pool.cfg.name, desired, COMPOSE_FILE_PATH, COMPOSE_PROJECT_NAME):
+            pool.last_scale_up = now
+            logging.info(f"Baseline enforced for {pool.cfg.name}: {current} -> {desired}")
+        return
+
     backlog = scan_queue_backlog(r, pool.cfg.queue_patterns)
     pool.hist.append(backlog)
     sma = sum(pool.hist) / len(pool.hist)
@@ -174,8 +183,6 @@ def decide_and_scale(dc: docker.DockerClient, r: redis.Redis, pool: PoolState):
         dt = max(1e-6, now - last_ts)
         rate = (backlog - last_val) / dt
     pool.last_point = (now, backlog)
-
-    current, min_uptime = current_replicas_and_min_uptime(dc, pool.cfg.name, COMPOSE_PROJECT_NAME)
     desired = current
 
     can_scale_up = (now - pool.last_scale_up) >= pool.cfg.cooldown_up
@@ -199,9 +206,10 @@ def decide_and_scale(dc: docker.DockerClient, r: redis.Redis, pool: PoolState):
             logging.info(f"Down-scaled {pool.cfg.name}: {current} -> {desired} | backlog={backlog} sma={sma:.2f} rate={rate:.2f}")
             return
 
+    min_uptime_s = int(min_uptime) if min_uptime is not None else -1
     logging.info(
         f"No scale {pool.cfg.name} | replicas={current} backlog={backlog} sma={sma:.2f} rate={rate:.2f} "
-        f"uptime.min={min_uptime:.0f if min_uptime else -1}s"
+        f"uptime.min={min_uptime_s}s"
     )
 
 
