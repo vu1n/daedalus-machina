@@ -10,3 +10,8 @@ infra/n8n/cloudflared/*.json
 infra/n8n/backup/
 infra/cloudflare/terraform/terraform.tfvars
 
+
+# macOS
+.DS_Store
+*/.DS_Store
+
